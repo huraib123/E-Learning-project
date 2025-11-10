@@ -28,6 +28,7 @@ public class FileClass {
 	private String filename;
 	
 	
+
 	private String filetype;
 	
 	

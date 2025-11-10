@@ -20,12 +20,32 @@ import jakarta.servlet.http.HttpServletResponse;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Autowired
-    private JwtTokenProvider jwttokenp;
+    private JwtTokenProvider jwtTokenProvider;
 
     @Autowired
     @Lazy
-    private CustomUserDetailService customuserdetail;
+    private CustomUserDetailService customUserDetailService;
+
+    // ✅ Define public paths that don’t need JWT authentication
+    private static final String[] PUBLIC_PATHS = {
+        "/api/auth/signup",
+        "/api/auth/login",
+        "/api/auth/verify",
+        "/api/auth/resend-otp",
+        "/uploads/",
+        "/api/classes/uploads/"
+    };
     
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String path = request.getRequestURI();
+        return path.startsWith("/api/auth")
+            || path.startsWith("/uploads")
+            || path.startsWith("/api/courses/mycourses")
+            
+            || path.startsWith("/api/users");
+    }
+
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -33,22 +53,29 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
 
         String path = request.getServletPath();
+        String path1 = request.getRequestURI();
+//        if (path1.startsWith("/videos/") || path1.startsWith("/uploads/")|| path.startsWith("/api/courses/allcourses/**")) {
+//            filterChain.doFilter(request, response);
+//            return;
+//        }
+        System.out.println("Authorization header: " + request.getHeader("Authorization"));
 
-        // ✅ Skip JWT check for public endpoints
-        if (path.startsWith("/api/auth/signup") ||
-            path.startsWith("/api/auth/login") ||  
-            path.startsWith("/api/auth/verify")) {
-            filterChain.doFilter(request, response);
-            return;
+
+        // ✅ Skip JWT validation for public paths
+        for (String publicPath : PUBLIC_PATHS) {
+            if (path.startsWith(publicPath)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
         }
 
-        // ✅ Continue JWT validation for protected endpoints
-        String token = jwttokenp.getTokenFromRequest(request);
+        // ✅ Proceed with JWT validation
+        String token = jwtTokenProvider.getTokenFromRequest(request);
 
-        if (token != null && jwttokenp.validateToken(token)) {
-            String username = jwttokenp.getUsernameFromToken(token);
+        if (token != null && jwtTokenProvider.validateToken(token)) {
+            String username = jwtTokenProvider.getUsernameFromToken(token);
 
-            UserDetails userDetails = customuserdetail.loadUserByUsername(username);
+            UserDetails userDetails = customUserDetailService.loadUserByUsername(username);
 
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
@@ -61,4 +88,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         filterChain.doFilter(request, response);
     }
+    
 }

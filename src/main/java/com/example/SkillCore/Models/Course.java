@@ -3,6 +3,10 @@ package com.example.SkillCore.Models;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import java.time.Duration;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -31,12 +35,22 @@ public class Course {
 	@Column(columnDefinition="TEXT")
 	public String description;
 	
-	public LocalDateTime getDuration() {
+	public String getDuration() {
 		return duration;
 	}
+	
+	private String subject;
 
-	public void setDuration(LocalDateTime duration) {
-		this.duration = duration;
+	public String getSubject() {
+		return subject;
+	}
+
+	public void setSubject(String subject) {
+		this.subject = subject;
+	}
+
+	public void setDuration(String duration2) {
+		this.duration = duration2;
 	}
 
 	public String category;
@@ -45,7 +59,7 @@ public class Course {
 	
 	public String thumbnailurl;
 	
-	public LocalDateTime duration;
+	public String duration;
 	
 	public double price;
 	
@@ -80,7 +94,7 @@ public class Course {
 	public void setCategory(String category) {
 		this.category = category;
 	}
-
+     
 	public String getLevel() {
 		return level;
 	}
@@ -117,14 +131,18 @@ public class Course {
 		return totalcourseenrolls;
 	}
 
+	
+
 	public void setTotalcourseenrolls(List<Enrollment> totalcourseenrolls) {
 		this.totalcourseenrolls = totalcourseenrolls;
 	}
 
 	@ManyToOne
 	@ JoinColumn(name="instructor_id",nullable=false)
+	@JsonBackReference
 	private User instructor;
 	
 	@OneToMany(mappedBy="course")
+	@JsonManagedReference
 	private List<Enrollment> totalcourseenrolls;
 }

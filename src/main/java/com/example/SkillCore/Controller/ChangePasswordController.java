@@ -1,12 +1,15 @@
 package com.example.SkillCore.Controller;
 
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,30 +28,41 @@ public class ChangePasswordController {
     @Autowired
     private PasswordEncoder passenco;
 
-    @PostMapping("/change")
-    public ResponseEntity<?> changepassword(@RequestBody PasswordHandling request, Authentication auth) {
+    @PutMapping("/change")
+    public ResponseEntity<?> changePassword(@RequestBody PasswordHandling request, Authentication authentication) {
 
-        if (auth == null || auth.getName() == null) {
-            return ResponseEntity.status(401).body("Unauthorized");
+        if (authentication == null || authentication.getName() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Unauthorized access"));
         }
 
-        String username = auth.getName();
+        String username = authentication.getName();
+        Optional<User> optionalUser = ur.findByEmail(username);
 
-        Optional<User> opt = ur.findByEmail(username);
-
-        if (opt.isEmpty()) {
-            return ResponseEntity.status(404).body("User not found");
+        if (optionalUser.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "User not found"));
         }
 
-        User user = opt.get();
+        User user = optionalUser.get();
 
+        // Check old password match
         if (!passenco.matches(request.getOldPassword(), user.getPassword())) {
-            return ResponseEntity.status(400).body("Old password is incorrect");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "Old password is incorrect"));
         }
 
+        // Optional: prevent using the same password
+        if (passenco.matches(request.getNewPassword(), user.getPassword())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "New password cannot be the same as the old password"));
+        }
+
+        // Update password
         user.setPassword(passenco.encode(request.getNewPassword()));
         ur.save(user);
 
-        return ResponseEntity.ok("Password changed successfully");
+        return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
     }
-}
+
+   }

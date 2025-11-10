@@ -5,6 +5,8 @@ import java.util.List;
 
 import org.hibernate.annotations.CreationTimestamp;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -50,15 +52,24 @@ public class User {
     @Column(unique = true)
     private String phonenumber;
 
-    private String imageurl;
+    private String profileimageurl;
 
-    @CreationTimestamp
+    public String getProfileimageurl() {
+		return profileimageurl;
+	}
+
+	public void setProfileimageurl(String profileimageurl) {
+		this.profileimageurl = profileimageurl;
+	}
+
+	@CreationTimestamp
     private LocalDateTime toc;
 
     @CreationTimestamp
     private LocalDateTime tod;
 
     @OneToMany(mappedBy = "instructor")
+    @JsonManagedReference
     private List<Course> totalcourses;
 
     @OneToMany(mappedBy = "user")
@@ -118,13 +129,7 @@ public class User {
 		this.phonenumber = phonenumber;
 	}
 
-	public String getImageurl() {
-		return imageurl;
-	}
-
-	public void setImageurl(String imageurl) {
-		this.imageurl = imageurl;
-	}
+	
 
 	public LocalDateTime getToc() {
 		return toc;
