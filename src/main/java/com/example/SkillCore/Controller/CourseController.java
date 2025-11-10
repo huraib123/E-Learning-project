@@ -1,12 +1,9 @@
 package com.example.SkillCore.Controller;
-import org.springframework.security.core.Authentication;
 
 import com.example.SkillCore.Models.Course;
 import com.example.SkillCore.Models.User;
 import com.example.SkillCore.Repository.Courserepo;
 import com.example.SkillCore.Repository.Userrepo;
-import com.example.SkillCore.Security.CustomUserDetail;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -115,16 +112,16 @@ public class CourseController {
     }
 
     // ✅ GET COURSE BY ID
-    @GetMapping("/allcourses/mycourses")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<?> getCoursesByLoggedInInstructor(Authentication authentication) {
-        CustomUserDetail user = (CustomUserDetail) authentication.getPrincipal();
-        List<Course> courses = cr.findCoursesByInstructorId(user.getId());
-        return courses.isEmpty()
-                ? ResponseEntity.status(HttpStatus.NOT_FOUND).body("No courses found for instructor ID " + user.getId())
-                : ResponseEntity.ok(courses);
+    @GetMapping("/allcourses/{id}")
+    @PreAuthorize("isAuthenticated()") // ✅ Requires a valid JWT token
+    public ResponseEntity<?> getCoursesByInstructor(@PathVariable Long id) {
+        List<Course> courses = cr.findCoursesByInstructorId(id);
+        if (courses.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                 .body("No courses found for instructor ID " + id);
+        }
+        return ResponseEntity.ok(courses);
     }
-
 
  
 
